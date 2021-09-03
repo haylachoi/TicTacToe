@@ -11,9 +11,9 @@ from typing import Coroutine
 # Độ sâu tối đa của cây tìm kiếm, nôm na là tính trước bao nhiêu bước, nếu đến độ sâu này mà chưa biết được kết quả(thắng thua hòa) thì phải dùng heuristic. Độ sâu càng lớn thì tính càng lâu. maxmoves phải > 0, với maxmoves > số ô của bàn cờ thì sẽ ko dùng đến heuristic và máy tính ko bao giờ thua.
 maxmoves = 1
 # Số ô liên tiếp để thắng
-wincount= 3
+wincount= 4
 #số hàng hoặc cột của bàn cờ. tốc độ chạy không phụ thuộc vào gridsize, nó phụ thuộc vào hình chữ nhật bé nhất chứa tất cả nước đi.
-gridsize = 3  
+gridsize = 10  
 
 #Độ sâu của state root (độ sâu giảm dần)
 rootdepth = gridsize*gridsize
