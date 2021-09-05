@@ -51,7 +51,7 @@ def wins(state, player,cor):
     sum= wincount * player
     i= min(botright[1]-wincount+1, cor[1])
     while i>= topleft[1] :
-        for j in range(0,wincount):
+        for j in range(wincount):
             sum-= state[cor[0]][i+j]
         if sum==0: 
             return True 
@@ -61,7 +61,7 @@ def wins(state, player,cor):
     #hàng dọc
     i= min(botright[0] - wincount+1, cor[0])
     while i >= topleft[0]:
-        for j in range(0,wincount):
+        for j in range(wincount):
             sum-= state[i+j][cor[1]]
         if sum==0: 
             return True 
@@ -75,7 +75,7 @@ def wins(state, player,cor):
     j= min(botright[1]-wincount+1, j)
     i= i - temp+j
     while i>=topleft[0] and j>= topleft[1]:
-        for k in range(0,wincount):
+        for k in range(wincount):
             sum-= state[i+k][j+k]
         if sum==0: 
             return True 
@@ -92,7 +92,7 @@ def wins(state, player,cor):
         return False
 
     while i>= topleft[0] and j <= botright[1]:
-        for k in range(0,wincount):
+        for k in range(wincount):
             sum-= state[i+k][j-k]
         if sum==0: 
             return True 
@@ -184,15 +184,20 @@ def evaluate(state):
     return score
 
 
-#Đánh giá điểm. VD 4 ô liên tiếp giống nhau là thắng thì xem xét 4 ô liên tiếp bất kỳ , nếu đã có 3 ô giống nhau và 1 ô trống thì được điểm số lớn, 2 ô giống nhau và 2 ô trống thì điểm trung bình, 3 ô trống thì được 1 chênh lệch điểm của máy và người là điểm số cuối cùng  
+#đánh giá điểm. 
+#VD 4 ô liên tiếp giống nhau là thắng thì xem xét 4 ô liên tiếp bất kỳ nếu đã có 3 ô giống nhau và 1 ô trống thì được điểm số lớn, 2 ô giống nhau và 2 ô trống thì điểm trung bình, 3 ô trống thì được 1 chênh lệch điểm của máy và người là điểm số cuối cùng  
+
 def getscore(sum, checkposone, checknegone, count,a):
-    #điểm của người chơi: khi có số ô giống nhau = wincount -1.
+    #hệ số điểm có chỉnh tùy thích nhưng phải làm sao để điểm của hàm này luôn < điểm được xác định khi tìm ra người chơi chiến thắng trong hàm minimax
+    #hệ số điểm có chỉnh tùy thích nhưng phải làm sao để điểm khi có số ô giống nhau = wincount -1 phải luôn >  điểm khi số ô giống nhau = wincount-2
+
+    #hệ số điểm của người chơi: khi có số ô giống nhau = wincount -1.
     xh1 = 300  #khi điểm này của người cao hơn máy thì máy sẽ có xu hướng chặn nước đi hơn là tạo nước đi mới. Điểm người thấp hơn máy thì máy sẽ chơi gà :D nên nếu khó thắng máy quá thì cho 2 điểm máy và người = nhau sẽ dễ chơi hơn.
-    #điểm của máy: khi có số ô giống nhau = wincount -1.
+    #hệ số điểm của máy: khi có số ô giống nhau = wincount -1.
     xc1 = 100
-    #điểm của người chơi: khi có số ô giống nhau = wincount -2.
+    #hệ số điểm của người chơi: khi có số ô giống nhau = wincount -2.
     xh2 = 30
-    #điểm của máy: khi có số ô giống nhau = wincount -2.
+    #hệ số điểm của máy: khi có số ô giống nhau = wincount -2.
     xc2 =10
 
     #tổng điểm của người
