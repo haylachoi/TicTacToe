@@ -13,7 +13,7 @@ maxmoves = 1
 # Số ô liên tiếp để thắng
 wincount= 4
 #số hàng hoặc cột của bàn cờ. tốc độ chạy không phụ thuộc vào gridsize, nó phụ thuộc vào hình chữ nhật bé nhất chứa tất cả nước đi.
-gridsize = 10  
+gridsize = 6  
 
 #Độ sâu của state root (độ sâu giảm dần)
 rootdepth = gridsize*gridsize
@@ -132,7 +132,7 @@ def smartemptycells(state):
     return cells
 
 #heuristic function. Đánh giá số điểm của trạng thái, với wincount =4 thì xem xét 4 ô liên tiếp nhau 
-def evaluate(state):
+def evaluate(state, player):
     score =0
     a =2
     #tạo hình chữ nhật chứa toàn bộ nước đi những phải đủ lớn để mỗi ô của máy hoặc người có thể là ô đầu và ô cuối của chuỗi 4 ô liên tiếp
@@ -151,7 +151,7 @@ def evaluate(state):
                 #Kiểm tra xem 1 và -1 có xuất hiện trong 4 ô không, -1 or bất kỳ số nào luôn =-1 nên nếu kết quả là -1 nghĩa là -1 đã xuất hiện
                 checkposone |= -state[r][c+ k]
                 checknegone |= state[r][c+k] 
-            score += getscore(sum, -checkposone, checknegone, count, a)       
+            score += getscore(sum, -checkposone, checknegone, count, a, player)       
     #hàng dọc       
     for c in range(tl[1], br[1]+1):
         for r in range(tl[0], br[0] - count+2):
@@ -162,7 +162,7 @@ def evaluate(state):
                     sum += state[r+ k][c]
                     checkposone |= -state[r+ k][c]
                     checknegone |= state[r+ k][c]
-                score += getscore(sum, -checkposone, checknegone, count, a)                       
+                score += getscore(sum, -checkposone, checknegone, count, a, player)                       
     #2 đường chéo
     for i in range(tl[0], br[0]-count+2):
         for j in range(tl[0], br[1] - count+2):
@@ -179,46 +179,36 @@ def evaluate(state):
                 fsum += state[i+k][j+ count-1- k]
                 fcheckposone |=  -state[i+k][j+ count-1- k]
                 fchecknegone |=  state[i+k][j+ count-1- k]
-            score += getscore(bsum, -bcheckposone, bchecknegone, count, a)       
-            score += getscore(fsum, -fcheckposone, fchecknegone, count, a)                           
+            score += getscore(bsum, -bcheckposone, bchecknegone, count, a, player)       
+            score += getscore(fsum, -fcheckposone, fchecknegone, count, a, player)                           
     return score
 
 
 #đánh giá điểm. 
 #VD 4 ô liên tiếp giống nhau là thắng thì xem xét 4 ô liên tiếp bất kỳ nếu đã có 3 ô giống nhau và 1 ô trống thì được điểm số lớn, 2 ô giống nhau và 2 ô trống thì điểm trung bình, 3 ô trống thì được 1 chênh lệch điểm của máy và người là điểm số cuối cùng  
-
-def getscore(sum, checkposone, checknegone, count,a):
-    #hệ số điểm có chỉnh tùy thích nhưng phải làm sao để điểm của hàm này luôn < điểm được xác định khi tìm ra người chơi chiến thắng trong hàm minimax
-    #hệ số điểm có chỉnh tùy thích nhưng phải làm sao để điểm khi có số ô giống nhau = wincount -1 phải luôn >  điểm khi số ô giống nhau = wincount-2
-
-    #hệ số điểm của người chơi: khi có số ô giống nhau = wincount -1.
-    xh1 = 300  #khi điểm này của người cao hơn máy thì máy sẽ có xu hướng chặn nước đi hơn là tạo nước đi mới. Điểm người thấp hơn máy thì máy sẽ chơi gà :D nên nếu khó thắng máy quá thì cho 2 điểm máy và người = nhau sẽ dễ chơi hơn.
-    #hệ số điểm của máy: khi có số ô giống nhau = wincount -1.
-    xc1 = 100
-    #hệ số điểm của người chơi: khi có số ô giống nhau = wincount -2.
-    xh2 = 30
-    #hệ số điểm của máy: khi có số ô giống nhau = wincount -2.
-    xc2 =10
-
+def getscore(sum, checkposone, checknegone, count,a, player):
+    #điểm có chỉnh tùy thích nhưng phải làm sao để điểm của hàm này luôn < điểm được xác định khi tìm ra người chơi chiến thắng trong hàm minimax
+    #điểm có chỉnh tùy thích nhưng phải làm sao để điểm khi có số ô giống nhau = wincount -1 phải luôn >  điểm khi số ô giống nhau = wincount-2
+    #khi điểm của đối thủ cao hơn thì player mới có xu hướng chặn đối thủ
+    scores = {
+        (wincount-1)*player:10000 *player,  #điểm của player: khi có số ô giống nhau = wincount -1.
+        (wincount-2)*player:100 *player,  #điểm của player: khi có số ô giống nhau = wincount -2.
+        (wincount-1)*-player:40000 *-player,  #điểm của đối thủ: khi có số ô giống nhau = wincount -1.
+        (wincount-2)*-player:400*-player}  #điểm của đối thủ: khi có số ô giống nhau = wincount -2.
     #tổng điểm của người
     hscore=0
     #tổng điểm của máy
     cscore = 0
 
     #wincount =4, TH: 2 ô giống nhau và 2 ô trống.
-    if sum == COMP* (count- a) and (checknegone!= -1):
-        cscore += gridsize* gridsize * xc2
-    #wincount = 4 , TH: 3 ô giống nhau và 1 ô trống
-    if sum > COMP* (count- a):
-        cscore += gridsize* gridsize * xc1
+    if sum >= COMP* (count- a) and (checknegone!= -1):
+        cscore += scores[sum]
     #wincount =4, TH: 3 ô trống
     if sum > 0 and sum < COMP* (count- a) and (checknegone!= -1) :
         cscore+= sum
 
-    if sum == HUMAN * (count -a) and (checkposone!= 1):
-        hscore += -gridsize * gridsize * xh2
-    if sum < HUMAN * (count -a):
-        hscore += -gridsize * gridsize * xh1
+    if sum <= HUMAN * (count -a) and (checkposone!= 1):
+        hscore += scores[sum]
     if sum < 0 and sum > HUMAN* (count- a) and (checkposone!= 1):
         hscore += sum
     return hscore + cscore
@@ -254,11 +244,11 @@ def minimax(state, depth, player, lastmove, al, be):
         if winner == 0 : 
             return [-1,-1,0]
         #điểm số của state càng gần root thì càng có lợi
-        score = -player* depth + -player * gridsize *gridsize * 10000
+        score = -player* depth + -player * 1000000
         return [-1, -1, score]
     #đến độ sâu tối đa cho phép thì dùng heuristic
     if rootdepth - depth >= maxmoves:               
-        score = evaluate(state)
+        score = evaluate(state, -player)
         return [-1,-1,score]     
 
     cells = smartemptycells(state)

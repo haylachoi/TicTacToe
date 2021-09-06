@@ -117,7 +117,7 @@ def wins(state, player,cor):
     while tr[0]-1 >= topleft[0] and tr[1]+1 <= botright[1] and state[tr[0]-1][tr[1]+1] == player:
         tr= [tr[0]-1, tr[1]+1]
         length+=1
-    while bl[0]+1 <= botright[0] and bl[1]-1 > topleft[1] and state[bl[0]+1][bl[1]-1] == player:
+    while bl[0]+1 <= botright[0] and bl[1]-1 >= topleft[1] and state[bl[0]+1][bl[1]-1] == player:
         bl= [bl[0]+1, bl[1]-1]
         length+=1
     if length> wincount+1:
@@ -126,7 +126,7 @@ def wins(state, player,cor):
     right= True
     if tr[0]-1 >= topleft[0] and tr[1]+1 <= botright[1] and state[tr[0]-1][tr[1]+1] == -player:
         right = False
-    if bl[0]+1 <= botright[0] and bl[1]-1 > topleft[1] and state[bl[0]+1][bl[1]-1] == -player:
+    if bl[0]+1 <= botright[0] and bl[1]-1 >= topleft[1] and state[bl[0]+1][bl[1]-1] == -player:
         left = False
     
     if length == wincount+1 and (left or right):
@@ -167,7 +167,7 @@ def smartemptycells(state):
     return cells
 
 #heuristic function. Đánh giá số điểm của trạng thái, với wincount =4 thì xem xét 4 ô liên tiếp nhau 
-def evaluate(state):
+def evaluate(state, player):
     score =0
     a =2
     #tạo hình chữ nhật chứa toàn bộ nước đi những phải đủ lớn để mỗi ô của máy hoặc người có thể là ô đầu và ô cuối của chuỗi 4 ô liên tiếp
@@ -175,7 +175,11 @@ def evaluate(state):
     br= [min(botright[0] + wincount , gridsize-1), min(botright[1] + wincount, gridsize-1)]
     
     count = wincount
-    scores = {wincount-1:1000, wincount-2:100, -wincount+1:-4000, -wincount+2: -400}
+    scores = {
+        (wincount-1)*player:10000 *player, 
+        (wincount-2)*player:100 *player, 
+        (wincount-1)*-player:40000 *-player, 
+        (wincount-2)*-player:400 *-player}
 
     #hàng
     for r in range(tl[0], br[0]+1):
@@ -275,12 +279,12 @@ def evaluate(state):
         while start <= br[0]-wincount+1:
                 sum=0
                 end = start+ wincount-1
-                if start - 1 >= tl[0] and state[r][start-1]== COMP:
+                if start - 1 >= tl[0] and state[start-1][c]== COMP:
                     end+=1
                 if end > br[0]:
                     start+=1
                     continue
-                if end+1 <= br[0] and state[r][end+1] == COMP:
+                if end+1 <= br[0] and state[end+1][c] == COMP:
                     start= end+2
                     end = start + wincount
                     continue
@@ -346,7 +350,7 @@ def evaluate(state):
             length = wincount
             if i -1>= tl[0] and j + wincount <= br[1] and state[i-1][j+wincount] == HUMAN:
                 length+=1
-            if ((i+ length <= br[0] and j- length +wincount >= tl[1]) and state[i+length][j- length +wincount]==HUMAN)==False and i+ length -1<= br[0] and j- length+1 +wincount >= tl[1]:                
+            if ((i+ length <= br[0] and j- length +wincount -1>= tl[1]) and state[i+length][j- length +wincount-1]==HUMAN)==False and i+ length -1<= br[0] and j- length +wincount >= tl[1]:                
                 ci =0
                 for k in range(0, length):                
                     if state[i+k][j+wincount-k-1] == HUMAN:
@@ -364,7 +368,7 @@ def evaluate(state):
             length = wincount
             if i -1>= tl[0] and j + wincount <= br[1] and state[i-1][j+wincount] == COMP:
                 length+=1
-            if ((i+ length  <= br[0] and j- length +wincount >= tl[1]) and state[i+length][j- length +wincount]==COMP)==False and i+ length -1<= br[0] and j- length+1 +wincount >= tl[1]:                
+            if ((i+ length <= br[0] and j- length +wincount-1 >= tl[1]) and state[i+length][j- length +wincount-1]==COMP)==False and i+ length -1<= br[0] and j- length +wincount >= tl[1]:                
                 ci =0
                 for k in range(0, length):                
                     if state[i+k][j+wincount-k-1] == COMP:
@@ -412,11 +416,11 @@ def minimax(state, depth, player, lastmove, al, be):
         if winner == 0 : 
             return [-1,-1,0]
         #điểm số của state càng gần root thì càng có lợi
-        score = -player* depth + -player * gridsize *gridsize * 10000
+        score = -player* depth + -player * 1000000
         return [-1, -1, score]
     #đến độ sâu tối đa cho phép thì dùng heuristic
     if rootdepth - depth >= maxmoves:               
-        score = evaluate(state)
+        score = evaluate(state, -player)
         return [-1,-1,score]     
 
     cells = smartemptycells(state)
